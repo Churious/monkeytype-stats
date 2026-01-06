@@ -1,0 +1,35 @@
+name: Update Monkeytype Stats
+
+on:
+  schedule:
+    # 6시간마다 실행 (원하면 수정 가능)
+    - cron: '0 */6 * * *'
+  workflow_dispatch: # 수동 실행 버튼 (테스트용)
+
+jobs:
+  update-stats:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # 파일 수정 권한 필수!
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+
+      - name: Run Generator
+        # 👇 여기에 본인 닉네임과 원하는 테마를 적으세요!
+        run: |
+          go run main.go -username=MiDeco -theme=serika_dark -mode=time -length=60
+
+      - name: Commit and Push
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add stats.svg
+          git commit -m "Update monkeytype stats" || exit 0
+          git push
