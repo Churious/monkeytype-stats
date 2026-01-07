@@ -43,12 +43,28 @@
             text-align: left;
         }
 
-        label {
-            display: block;
+        /* 라벨과 링크를 한 줄에 배치 */
+        .label-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 8px;
+        }
+
+        label {
             font-size: 0.8rem;
             color: var(--sub-color);
         }
+
+        /* 테마 찾기 링크 스타일 */
+        .theme-link {
+            font-size: 0.75rem;
+            color: var(--main-color);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--main-color);
+            transition: opacity 0.2s;
+        }
+        .theme-link:hover { opacity: 0.8; }
 
         input, select {
             width: 100%;
@@ -78,7 +94,6 @@
             justify-content: center;
         }
         
-        /* 이미지 로딩 효과 */
         img { max-width: 100%; border-radius: 10px; transition: opacity 0.3s; }
         .loading { opacity: 0.5; filter: blur(2px); }
 
@@ -117,33 +132,43 @@
         <p>Create your dynamic readme stats card.</p>
 
         <div class="input-group">
-            <label>Username</label>
-            <input type="text" id="username" placeholder="MiDeco" value="MiDeco">
+            <div class="label-row">
+                <label>Username</label>
+            </div>
+            <input type="text" id="username" placeholder="MiDeco" value="Churious">
         </div>
 
         <div class="input-group">
-            <label>Theme (e.g. serika_dark, bento, 9009)</label>
-            <input type="text" id="theme" placeholder="dark" value="serika_dark" list="theme-list">
+            <div class="label-row">
+                <label>Theme Name</label>
+                <a href="https://github.com/monkeytypegame/monkeytype/tree/master/frontend/static/themes" target="_blank" class="theme-link">🔎 View All Themes</a>
+            </div>
+            <input type="text" id="theme" placeholder="dark" value="hedge" list="theme-list">
+            
             <datalist id="theme-list">
+                <option value="hedge">
                 <option value="serika_dark">
                 <option value="bento">
                 <option value="rudy">
                 <option value="9009">
                 <option value="modern_dolch">
                 <option value="catppuccin_latte">
+                <option value="nord">
+                <option value="botanical">
+                <option value="café">
             </datalist>
         </div>
 
         <div class="row">
             <div class="col input-group">
-                <label>Mode</label>
+                <div class="label-row"><label>Mode</label></div>
                 <select id="mode">
-                    <option value="time">Time</option>
+                    <option value="time" selected>Time</option>
                     <option value="words">Words</option>
                 </select>
             </div>
             <div class="col input-group">
-                <label>Length</label>
+                <div class="label-row"><label>Length</label></div>
                 <select id="length">
                     </select>
             </div>
@@ -153,7 +178,7 @@
             <img id="preview-img" src="" alt="Stats Preview">
         </div>
 
-        <label>Click to Copy Markdown</label>
+        <label style="display:block; text-align:left; margin-bottom:8px;">Click to Copy Markdown</label>
         <div class="code-box" id="code-box">
             <span class="copy-hint">Click to Copy</span>
             <span id="markdown-code"></span>
@@ -168,17 +193,18 @@
         const codeBox = document.getElementById('code-box');
         const markdownCode = document.getElementById('markdown-code');
 
-        // 모드별 길이 옵션
         const options = {
             time: [15, 30, 60, 120],
             words: [10, 25, 50, 100]
         };
 
-        // Length 옵션 업데이트 함수
+        // 초기 실행 변수 (기본값 설정용)
+        let isFirstRun = true;
+
         function updateLengthOptions() {
             const mode = modeSelect.value;
             const currentVal = lengthSelect.value;
-            lengthSelect.innerHTML = ''; // 초기화
+            lengthSelect.innerHTML = ''; 
             
             options[mode].forEach(opt => {
                 const el = document.createElement('option');
@@ -187,34 +213,36 @@
                 lengthSelect.appendChild(el);
             });
             
-            // 기존 선택값 유지 노력 (없으면 첫번째)
-            if (options[mode].includes(parseInt(currentVal))) {
+            // 첫 실행이면 무조건 30으로 설정
+            if (isFirstRun && mode === 'time') {
+                lengthSelect.value = "30";
+                isFirstRun = false; 
+            } else if (options[mode].includes(parseInt(currentVal))) {
+                // 모드 변경 시 기존 값이 유효하면 유지
                 lengthSelect.value = currentVal;
             }
         }
 
-        // URL 생성 및 업데이트
         function updatePreview() {
             const user = document.getElementById('username').value.trim() || 'Guest';
-            const theme = document.getElementById('theme').value.trim() || 'dark';
+            // 띄어쓰기 있으면 언더바로 자동 변환해서 URL 생성
+            let themeRaw = document.getElementById('theme').value.trim() || 'dark';
+            const theme = themeRaw.replace(/\s+/g, '_'); 
+
             const mode = modeSelect.value;
             const length = lengthSelect.value;
 
-            // 현재 접속된 도메인 감지
             const baseUrl = window.location.origin; 
             const imgUrl = `${baseUrl}/api?username=${user}&theme=${theme}&mode=${mode}&length=${length}`;
             
-            // 이미지 업데이트 (로딩 효과)
             img.classList.add('loading');
             img.src = imgUrl;
             img.onload = () => img.classList.remove('loading');
 
-            // 마크다운 업데이트
             const md = `[![My Stats](${imgUrl})](https://monkeytype.com/profile/${user})`;
             markdownCode.innerText = md;
         }
 
-        // 이벤트 리스너 등록
         inputs.forEach(id => {
             document.getElementById(id).addEventListener('input', updatePreview);
         });
@@ -223,8 +251,10 @@
             updateLengthOptions();
             updatePreview();
         });
+        
+        // Length가 바뀌어도 이미지 업데이트
+        lengthSelect.addEventListener('change', updatePreview);
 
-        // 클립보드 복사 기능
         codeBox.addEventListener('click', () => {
             navigator.clipboard.writeText(markdownCode.innerText).then(() => {
                 const originalText = markdownCode.innerText;
@@ -235,8 +265,8 @@
             });
         });
 
-        // 초기 실행
-        updateLengthOptions();
+        // 초기화
+        updateLengthOptions(); // 여기서 30으로 세팅됨
         updatePreview();
 
     </script>
