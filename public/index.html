@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monkeytype Stats Builder</title>
+    <style>
+        :root {
+            --bg-color: #323437;
+            --main-color: #e2b714;
+            --sub-color: #646669;
+            --text-color: #d1d0c5;
+            --card-bg: #2c2e31;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Roboto Mono', monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
+        }
+
+        h1 { color: var(--main-color); margin-bottom: 10px; }
+        p { color: var(--sub-color); margin-bottom: 30px; font-size: 0.9rem; }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.8rem;
+            color: var(--sub-color);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--bg-color);
+            border: 2px solid var(--sub-color);
+            border-radius: 5px;
+            color: var(--text-color);
+            font-family: inherit;
+            font-size: 1rem;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus, select:focus { border-color: var(--main-color); }
+
+        .row { display: flex; gap: 10px; }
+        .col { flex: 1; }
+
+        .preview-area {
+            margin-top: 30px;
+            margin-bottom: 20px;
+            min-height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* 이미지 로딩 효과 */
+        img { max-width: 100%; border-radius: 10px; transition: opacity 0.3s; }
+        .loading { opacity: 0.5; filter: blur(2px); }
+
+        .code-box {
+            background-color: #1e1e1e;
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            word-break: break-all;
+            color: var(--sub-color);
+            cursor: pointer;
+            position: relative;
+            text-align: left;
+        }
+
+        .code-box:hover { color: var(--text-color); }
+        
+        .copy-hint {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            font-size: 0.7rem;
+            color: var(--main-color);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .code-box:hover .copy-hint { opacity: 1; }
+
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div class="container">
+        <h1>Monkeytype Stats Builder</h1>
+        <p>Create your dynamic readme stats card.</p>
+
+        <div class="input-group">
+            <label>Username</label>
+            <input type="text" id="username" placeholder="MiDeco" value="MiDeco">
+        </div>
+
+        <div class="input-group">
+            <label>Theme (e.g. serika_dark, bento, 9009)</label>
+            <input type="text" id="theme" placeholder="dark" value="serika_dark" list="theme-list">
+            <datalist id="theme-list">
+                <option value="serika_dark">
+                <option value="bento">
+                <option value="rudy">
+                <option value="9009">
+                <option value="modern_dolch">
+                <option value="catppuccin_latte">
+            </datalist>
+        </div>
+
+        <div class="row">
+            <div class="col input-group">
+                <label>Mode</label>
+                <select id="mode">
+                    <option value="time">Time</option>
+                    <option value="words">Words</option>
+                </select>
+            </div>
+            <div class="col input-group">
+                <label>Length</label>
+                <select id="length">
+                    </select>
+            </div>
+        </div>
+
+        <div class="preview-area">
+            <img id="preview-img" src="" alt="Stats Preview">
+        </div>
+
+        <label>Click to Copy Markdown</label>
+        <div class="code-box" id="code-box">
+            <span class="copy-hint">Click to Copy</span>
+            <span id="markdown-code"></span>
+        </div>
+    </div>
+
+    <script>
+        const inputs = ['username', 'theme', 'mode', 'length'];
+        const modeSelect = document.getElementById('mode');
+        const lengthSelect = document.getElementById('length');
+        const img = document.getElementById('preview-img');
+        const codeBox = document.getElementById('code-box');
+        const markdownCode = document.getElementById('markdown-code');
+
+        // 모드별 길이 옵션
+        const options = {
+            time: [15, 30, 60, 120],
+            words: [10, 25, 50, 100]
+        };
+
+        // Length 옵션 업데이트 함수
+        function updateLengthOptions() {
+            const mode = modeSelect.value;
+            const currentVal = lengthSelect.value;
+            lengthSelect.innerHTML = ''; // 초기화
+            
+            options[mode].forEach(opt => {
+                const el = document.createElement('option');
+                el.value = opt;
+                el.innerText = opt;
+                lengthSelect.appendChild(el);
+            });
+            
+            // 기존 선택값 유지 노력 (없으면 첫번째)
+            if (options[mode].includes(parseInt(currentVal))) {
+                lengthSelect.value = currentVal;
+            }
+        }
+
+        // URL 생성 및 업데이트
+        function updatePreview() {
+            const user = document.getElementById('username').value.trim() || 'Guest';
+            const theme = document.getElementById('theme').value.trim() || 'dark';
+            const mode = modeSelect.value;
+            const length = lengthSelect.value;
+
+            // 현재 접속된 도메인 감지
+            const baseUrl = window.location.origin; 
+            const imgUrl = `${baseUrl}/api?username=${user}&theme=${theme}&mode=${mode}&length=${length}`;
+            
+            // 이미지 업데이트 (로딩 효과)
+            img.classList.add('loading');
+            img.src = imgUrl;
+            img.onload = () => img.classList.remove('loading');
+
+            // 마크다운 업데이트
+            const md = `[![My Stats](${imgUrl})](https://monkeytype.com/profile/${user})`;
+            markdownCode.innerText = md;
+        }
+
+        // 이벤트 리스너 등록
+        inputs.forEach(id => {
+            document.getElementById(id).addEventListener('input', updatePreview);
+        });
+
+        modeSelect.addEventListener('change', () => {
+            updateLengthOptions();
+            updatePreview();
+        });
+
+        // 클립보드 복사 기능
+        codeBox.addEventListener('click', () => {
+            navigator.clipboard.writeText(markdownCode.innerText).then(() => {
+                const originalText = markdownCode.innerText;
+                markdownCode.innerText = "✅ Copied to clipboard!";
+                setTimeout(() => {
+                    markdownCode.innerText = originalText;
+                }, 1500);
+            });
+        });
+
+        // 초기 실행
+        updateLengthOptions();
+        updatePreview();
+
+    </script>
+</body>
+</html>
