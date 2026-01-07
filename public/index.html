@@ -3,7 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
     <title>Monkeytype Stats Builder</title>
+    <meta name="description" content="Generate dynamic Monkeytype stats cards for your GitHub Readme.">
+    <meta property="og:title" content="Monkeytype Stats Builder">
+    <meta property="og:description" content="Create your dynamic readme stats card with one click. Supports all themes & transparent background.">
+    <meta property="og:image" content="https://raw.githubusercontent.com/monkeytypegame/monkeytype/master/frontend/static/logo-192.png">
+    
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐵</text></svg>">
+
     <style>
         :root {
             --bg-color: #323437;
@@ -24,6 +32,8 @@
             justify-content: center;
             min-height: 100vh;
             margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
         }
 
         .container {
@@ -32,11 +42,12 @@
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             max-width: 600px;
-            width: 90%;
+            width: 100%;
             text-align: center;
+            position: relative;
         }
 
-        h1 { color: var(--main-color); margin-bottom: 10px; }
+        h1 { color: var(--main-color); margin-bottom: 10px; font-size: 1.8rem; }
         p { color: var(--sub-color); margin-bottom: 30px; font-size: 0.9rem; }
 
         .input-group { margin-bottom: 20px; text-align: left; position: relative; }
@@ -138,6 +149,19 @@
         .checkbox-group input:checked + .checkbox-label {
             color: var(--main-color);
         }
+
+        /* ✨ Footer 스타일 */
+        footer {
+            margin-top: 30px;
+            font-size: 0.8rem;
+            color: var(--sub-color);
+        }
+        footer a {
+            color: var(--sub-color);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        footer a:hover { color: var(--main-color); }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
 </head>
@@ -186,6 +210,10 @@
         <label style="display:block; text-align:left; margin-bottom:8px;">Click to Copy Markdown</label>
         <div class="code-box" id="code-box"><span class="copy-hint">Click to Copy</span><span id="markdown-code"></span></div>
     </div>
+
+    <footer>
+        Made with ❤️ by <a href="https://github.com/Churious" target="_blank">@Churious</a>
+    </footer>
 
     <script>
         const usernameInput = document.getElementById('username');
