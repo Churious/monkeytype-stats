@@ -200,26 +200,26 @@
             }
         }
 
-        // 2. 드롭다운 렌더링 함수 (필터링 지원)
+        // 2. 드롭다운 렌더링 함수
         function renderDropdown(filterText = "") {
             themeDropdown.innerHTML = '';
             const lowerFilter = filterText.toLowerCase();
 
-            // 필터링된 테마 리스트 생성
+            // 필터링 (빈 문자열이면 전체 표시)
             const filtered = allThemes.filter(t => t.toLowerCase().includes(lowerFilter));
 
-            // (1) 맨 위에 "Custom Input" (초기화용) 추가 - 이모티콘 제거됨
+            // (1) Custom Input (초기화용)
             const customOpt = document.createElement('div');
             customOpt.className = 'theme-option custom';
-            customOpt.innerText = '[ Clear / Custom Input ]'; // 명확한 텍스트
+            customOpt.innerText = '[ Clear / Custom Input ]';
             customOpt.onclick = () => {
-                themeInput.value = ""; // 내용 비우기
+                themeInput.value = "";
                 themeInput.focus();
-                renderDropdown(""); // 전체 리스트 다시 보여주기
+                renderDropdown(""); // 비운 후 전체 리스트 보여주기
             };
             themeDropdown.appendChild(customOpt);
 
-            // (2) 테마 목록 추가
+            // (2) 테마 목록
             if (filtered.length === 0) {
                 const noResult = document.createElement('div');
                 noResult.className = 'theme-option';
@@ -244,12 +244,14 @@
             themeDropdown.classList.add('show');
         }
 
-        // 3. 입력창 이벤트 핸들러
-        // 클릭하거나 포커스되면 드롭다운 열기
-        themeInput.addEventListener('focus', () => renderDropdown(themeInput.value));
-        themeInput.addEventListener('click', () => renderDropdown(themeInput.value));
+        // 3. 입력창 이벤트 핸들러 (수정된 부분)
         
-        // 타이핑할 때 필터링 및 미리보기 업데이트
+        // 클릭하거나 포커스될 때는 '무조건 전체 리스트' ("") 보여주기
+        // (사용자가 현재 입력된 값을 유지하면서 다른 목록을 보고 싶어하는 경우 대응)
+        themeInput.addEventListener('focus', () => renderDropdown(""));
+        themeInput.addEventListener('click', () => renderDropdown(""));
+        
+        // 타이핑할 때만 '필터링' 적용
         themeInput.addEventListener('input', () => {
             renderDropdown(themeInput.value);
             updatePreview();
