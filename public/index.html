@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Monkeytype Stats Builder</title>
     <style>
-        /* 기존 변수 및 기본 스타일 유지 */
+        /* --- 변수 및 기본 스타일 --- */
         :root {
             --bg-color: #323437;
             --main-color: #e2b714;
             --sub-color: #646669;
             --text-color: #d1d0c5;
             --card-bg: #2c2e31;
-            --dropdown-bg: #1e1e1e; /* 드롭다운 배경색 추가 */
+            --dropdown-bg: #1e1e1e;
         }
 
         body {
@@ -53,8 +53,8 @@
         }
         .theme-link:hover { opacity: 0.8; }
 
-        /* 기본 Input, Select 스타일 */
-        input, select, .theme-display {
+        /* Input, Select 공통 */
+        input, select {
             width: 100%;
             padding: 12px;
             background-color: var(--bg-color);
@@ -69,53 +69,49 @@
         }
         input:focus, select:focus { border-color: var(--main-color); }
 
-        /* --- 커스텀 드롭다운 스타일 --- */
-        .theme-display {
-            cursor: pointer; /* 클릭 가능하다는 느낌 */
-            caret-color: transparent; /* 커서 숨김 (입력 불가 느낌) */
-        }
-        
-        /* 드롭다운 목록 박스 */
+        /* --- 드롭다운 스타일 --- */
         .theme-dropdown {
             position: absolute;
-            top: 100%; /* 입력창 바로 아래 */
+            top: 100%;
             left: 0;
             width: 100%;
-            max-height: 300px; /* 너무 길어지면 스크롤 */
+            max-height: 250px;
             overflow-y: auto;
             background-color: var(--dropdown-bg);
             border: 2px solid var(--sub-color);
             border-top: none;
             border-radius: 0 0 5px 5px;
-            z-index: 10;
-            display: none; /* 기본은 숨김 */
+            z-index: 100;
+            display: none; /* 기본 숨김 */
             box-sizing: border-box;
         }
-        .theme-dropdown.show { display: block; } /* 보이기 클래스 */
+        .theme-dropdown.show { display: block; }
 
-        /* 드롭다운 항목 */
         .theme-option {
             padding: 10px 12px;
             cursor: pointer;
             transition: background-color 0.1s;
+            text-align: left;
         }
         .theme-option:hover { background-color: var(--bg-color); color: var(--main-color); }
-        .theme-option.custom { color: var(--main-color); font-weight: bold; border-bottom: 1px solid var(--sub-color); }
-
-        /* 직접 입력창 (평소엔 숨김) */
-        #theme-custom-input {
-            display: none;
+        
+        /* Custom Input 항목 스타일 */
+        .theme-option.custom {
+            color: var(--sub-color);
+            font-size: 0.9rem;
+            border-bottom: 1px solid #3c3c3c;
+            font-style: italic;
         }
-        #theme-custom-input.show {
-            display: block;
+        .theme-option.custom:hover {
+            color: var(--main-color);
+            font-style: normal;
         }
 
-        /* 스크롤바 커스텀 */
+        /* 스크롤바 */
         .theme-dropdown::-webkit-scrollbar { width: 8px; }
         .theme-dropdown::-webkit-scrollbar-track { background: var(--dropdown-bg); }
         .theme-dropdown::-webkit-scrollbar-thumb { background: var(--sub-color); border-radius: 4px; }
 
-        /* 나머지 스타일 유지 */
         .row { display: flex; gap: 10px; }
         .col { flex: 1; }
         .preview-area { margin-top: 30px; margin-bottom: 20px; min-height: 150px; display: flex; align-items: center; justify-content: center; }
@@ -145,12 +141,8 @@
                 <span id="theme-status" class="theme-status">Loading themes...</span>
             </div>
             
-            <input type="text" id="theme-display" class="theme-display" value="hedge" readonly>
+            <input type="text" id="theme-input" value="hedge" autocomplete="off">
             
-            <input type="text" id="theme-custom-input" placeholder="Type custom theme name...">
-
-            <input type="hidden" id="theme-real-value" value="hedge">
-
             <div id="theme-dropdown" class="theme-dropdown"></div>
 
             <div style="text-align: right; margin-top: 5px;">
@@ -175,105 +167,103 @@
     </div>
 
     <script>
-        // 요소 가져오기
+        // DOM 요소
         const usernameInput = document.getElementById('username');
+        const themeInput = document.getElementById('theme-input');
+        const themeDropdown = document.getElementById('theme-dropdown');
+        const themeStatus = document.getElementById('theme-status');
+        const themeContainer = document.getElementById('theme-container');
+        
         const modeSelect = document.getElementById('mode');
         const lengthSelect = document.getElementById('length');
         const img = document.getElementById('preview-img');
         const codeBox = document.getElementById('code-box');
         const markdownCode = document.getElementById('markdown-code');
-        
-        // 테마 관련 요소
-        const themeContainer = document.getElementById('theme-container');
-        const themeDisplay = document.getElementById('theme-display');
-        const themeCustomInput = document.getElementById('theme-custom-input');
-        const themeRealValue = document.getElementById('theme-real-value');
-        const themeDropdown = document.getElementById('theme-dropdown');
-        const themeStatus = document.getElementById('theme-status');
 
+        // 데이터
+        let allThemes = [];
         let isFirstRun = true;
         const fallbackThemes = ["serika_dark", "bento", "rudy", "9009", "modern_dolch", "catppuccin_latte", "nord", "botanical", "cafe", "alduin", "arch", "aether", "bushido", "dracula", "joker", "miami", "monokai", "oblivion", "olivia", "one_command", "paper", "rose_pine", "shoko", "snes", "soaring_skies", "terminal", "vaporwave"];
         const options = { time: [15, 30, 60, 120], words: [10, 25, 50, 100] };
 
-        // --- 테마 드롭다운 로직 ---
-
-        // 1. 테마 목록 가져오기 및 드롭다운 채우기
+        // 1. 테마 가져오기
         async function fetchThemes() {
             try {
                 const response = await fetch('https://api.github.com/repos/monkeytypegame/monkeytype/contents/frontend/static/themes');
                 if (!response.ok) throw new Error();
                 const data = await response.json();
-                const themes = data.filter(f => f.name.endsWith('.css')).map(f => f.name.replace('.css', ''));
-                populateDropdown(themes, "✅ Loaded from GitHub");
+                allThemes = data.filter(f => f.name.endsWith('.css')).map(f => f.name.replace('.css', ''));
+                themeStatus.innerText = "✅ Loaded from GitHub";
             } catch (e) {
-                populateDropdown(fallbackThemes, "⚠️ Using fallback list");
+                allThemes = fallbackThemes;
+                themeStatus.innerText = "⚠️ Using fallback list";
             }
         }
 
-        function populateDropdown(themes, statusMsg) {
+        // 2. 드롭다운 렌더링 함수 (필터링 지원)
+        function renderDropdown(filterText = "") {
             themeDropdown.innerHTML = '';
-            // 1. 직접 입력 옵션 추가
-            const customOption = document.createElement('div');
-            customOption.className = 'theme-option custom';
-            customOption.innerText = '✏️ Custom Input';
-            customOption.onclick = () => enableCustomInput();
-            themeDropdown.appendChild(customOption);
+            const lowerFilter = filterText.toLowerCase();
 
-            // 2. 테마 목록 추가
-            themes.sort().forEach(theme => {
-                const option = document.createElement('div');
-                option.className = 'theme-option';
-                option.innerText = theme;
-                option.onclick = () => selectTheme(theme);
-                themeDropdown.appendChild(option);
-            });
-            themeStatus.innerText = statusMsg;
+            // 필터링된 테마 리스트 생성
+            const filtered = allThemes.filter(t => t.toLowerCase().includes(lowerFilter));
+
+            // (1) 맨 위에 "Custom Input" (초기화용) 추가 - 이모티콘 제거됨
+            const customOpt = document.createElement('div');
+            customOpt.className = 'theme-option custom';
+            customOpt.innerText = '[ Clear / Custom Input ]'; // 명확한 텍스트
+            customOpt.onclick = () => {
+                themeInput.value = ""; // 내용 비우기
+                themeInput.focus();
+                renderDropdown(""); // 전체 리스트 다시 보여주기
+            };
+            themeDropdown.appendChild(customOpt);
+
+            // (2) 테마 목록 추가
+            if (filtered.length === 0) {
+                const noResult = document.createElement('div');
+                noResult.className = 'theme-option';
+                noResult.style.color = '#666';
+                noResult.style.cursor = 'default';
+                noResult.innerText = 'No matching themes';
+                themeDropdown.appendChild(noResult);
+            } else {
+                filtered.sort().forEach(theme => {
+                    const option = document.createElement('div');
+                    option.className = 'theme-option';
+                    option.innerText = theme;
+                    option.onclick = () => {
+                        themeInput.value = theme;
+                        themeDropdown.classList.remove('show');
+                        updatePreview();
+                    };
+                    themeDropdown.appendChild(option);
+                });
+            }
+
+            themeDropdown.classList.add('show');
         }
 
-        // 2. 드롭다운 열기/닫기
-        themeDisplay.addEventListener('click', (e) => {
-            e.stopPropagation(); // 이벤트 전파 막기
-            themeDropdown.classList.toggle('show');
+        // 3. 입력창 이벤트 핸들러
+        // 클릭하거나 포커스되면 드롭다운 열기
+        themeInput.addEventListener('focus', () => renderDropdown(themeInput.value));
+        themeInput.addEventListener('click', () => renderDropdown(themeInput.value));
+        
+        // 타이핑할 때 필터링 및 미리보기 업데이트
+        themeInput.addEventListener('input', () => {
+            renderDropdown(themeInput.value);
+            updatePreview();
         });
 
-        // 다른 곳 클릭하면 드롭다운 닫기
+        // 외부 클릭 시 닫기
         document.addEventListener('click', (e) => {
             if (!themeContainer.contains(e.target)) {
                 themeDropdown.classList.remove('show');
             }
         });
 
-        // 3. 테마 선택 시 동작
-        function selectTheme(theme) {
-            themeDisplay.value = theme;      // 보여주는 값 변경
-            themeRealValue.value = theme;    // 실제 값 변경
-            themeDropdown.classList.remove('show'); // 목록 닫기
-            
-            // 직접 입력 모드 해제
-            themeDisplay.style.display = 'block';
-            themeCustomInput.classList.remove('show');
-            
-            updatePreview();
-        }
 
-        // 4. 직접 입력 모드 활성화
-        function enableCustomInput() {
-            themeDropdown.classList.remove('show'); // 목록 닫기
-            themeDisplay.style.display = 'none';    // 보여주는 창 숨김
-            themeCustomInput.classList.add('show'); // 입력창 보여줌
-            themeCustomInput.value = themeRealValue.value; // 현재 값 채움
-            themeCustomInput.focus(); // 포커스 줌
-        }
-
-        // 직접 입력 시 업데이트
-        themeCustomInput.addEventListener('input', () => {
-            themeRealValue.value = themeCustomInput.value.trim();
-            updatePreview();
-        });
-
-
-        // --- 기존 로직 (업데이트) ---
-
+        // --- 기타 로직 ---
         function updateLengthOptions() {
             const mode = modeSelect.value;
             const currentVal = lengthSelect.value;
@@ -287,8 +277,7 @@
 
         function updatePreview() {
             const user = usernameInput.value.trim() || 'Guest';
-            // 실제 값(hidden input)을 가져와서 사용
-            let themeRaw = themeRealValue.value.trim() || 'dark';
+            let themeRaw = themeInput.value.trim() || 'dark';
             const theme = themeRaw.replace(/\s+/g, '_'); 
 
             const mode = modeSelect.value;
@@ -302,10 +291,10 @@
             markdownCode.innerText = `[![My Stats](${imgUrl})](https://monkeytype.com/profile/${user})`;
         }
 
-        // 이벤트 리스너 연결
         usernameInput.addEventListener('input', updatePreview);
         modeSelect.addEventListener('change', () => { updateLengthOptions(); updatePreview(); });
         lengthSelect.addEventListener('change', updatePreview);
+        
         codeBox.addEventListener('click', () => {
             navigator.clipboard.writeText(markdownCode.innerText).then(() => {
                 const original = markdownCode.innerText; markdownCode.innerText = "✅ Copied to clipboard!";
@@ -313,7 +302,7 @@
             });
         });
 
-        // 초기화
+        // 초기 실행
         fetchThemes();
         updateLengthOptions();
         updatePreview();
