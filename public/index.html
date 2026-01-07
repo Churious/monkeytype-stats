@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Monkeytype Stats Builder</title>
     <style>
-        /* --- 변수 및 기본 스타일 --- */
         :root {
             --bg-color: #323437;
             --main-color: #e2b714;
@@ -53,7 +52,6 @@
         }
         .theme-link:hover { opacity: 0.8; }
 
-        /* Input, Select 공통 */
         input, select {
             width: 100%;
             padding: 12px;
@@ -69,7 +67,6 @@
         }
         input:focus, select:focus { border-color: var(--main-color); }
 
-        /* --- 드롭다운 스타일 --- */
         .theme-dropdown {
             position: absolute;
             top: 100%;
@@ -82,7 +79,7 @@
             border-top: none;
             border-radius: 0 0 5px 5px;
             z-index: 100;
-            display: none; /* 기본 숨김 */
+            display: none;
             box-sizing: border-box;
         }
         .theme-dropdown.show { display: block; }
@@ -95,7 +92,6 @@
         }
         .theme-option:hover { background-color: var(--bg-color); color: var(--main-color); }
         
-        /* Custom Input 항목 스타일 */
         .theme-option.custom {
             color: var(--sub-color);
             font-size: 0.9rem;
@@ -107,7 +103,6 @@
             font-style: normal;
         }
 
-        /* 스크롤바 */
         .theme-dropdown::-webkit-scrollbar { width: 8px; }
         .theme-dropdown::-webkit-scrollbar-track { background: var(--dropdown-bg); }
         .theme-dropdown::-webkit-scrollbar-thumb { background: var(--sub-color); border-radius: 4px; }
@@ -121,6 +116,28 @@
         .code-box:hover { color: var(--text-color); }
         .copy-hint { position: absolute; right: 10px; top: 10px; font-size: 0.7rem; color: var(--main-color); opacity: 0; transition: opacity 0.2s; }
         .code-box:hover .copy-hint { opacity: 1; }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            margin-top: 5px;
+            gap: 8px;
+            cursor: pointer;
+        }
+        .checkbox-group input {
+            width: auto;
+            margin: 0;
+            cursor: pointer;
+        }
+        .checkbox-label {
+            font-size: 0.8rem;
+            color: var(--sub-color);
+            user-select: none;
+        }
+        .checkbox-group input:checked + .checkbox-label {
+            color: var(--main-color);
+        }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
 </head>
@@ -142,7 +159,6 @@
             </div>
             
             <input type="text" id="theme-input" value="hedge" autocomplete="off">
-            
             <div id="theme-dropdown" class="theme-dropdown"></div>
 
             <div style="text-align: right; margin-top: 5px;">
@@ -158,6 +174,11 @@
             <div class="col input-group">
                 <div class="label-row"><label>Length</label></div>
                 <select id="length"></select>
+                
+                <label class="checkbox-group">
+                    <input type="checkbox" id="transparent">
+                    <span class="checkbox-label">Transparent Background</span>
+                </label>
             </div>
         </div>
 
@@ -167,7 +188,6 @@
     </div>
 
     <script>
-        // DOM 요소
         const usernameInput = document.getElementById('username');
         const themeInput = document.getElementById('theme-input');
         const themeDropdown = document.getElementById('theme-dropdown');
@@ -176,17 +196,17 @@
         
         const modeSelect = document.getElementById('mode');
         const lengthSelect = document.getElementById('length');
+        const transparentInput = document.getElementById('transparent');
+        
         const img = document.getElementById('preview-img');
         const codeBox = document.getElementById('code-box');
         const markdownCode = document.getElementById('markdown-code');
 
-        // 데이터
         let allThemes = [];
         let isFirstRun = true;
         const fallbackThemes = ["serika_dark", "bento", "rudy", "9009", "modern_dolch", "catppuccin_latte", "nord", "botanical", "cafe", "alduin", "arch", "aether", "bushido", "dracula", "joker", "miami", "monokai", "oblivion", "olivia", "one_command", "paper", "rose_pine", "shoko", "snes", "soaring_skies", "terminal", "vaporwave"];
         const options = { time: [15, 30, 60, 120], words: [10, 25, 50, 100] };
 
-        // 1. 테마 가져오기
         async function fetchThemes() {
             try {
                 const response = await fetch('https://api.github.com/repos/monkeytypegame/monkeytype/contents/frontend/static/themes');
@@ -200,26 +220,21 @@
             }
         }
 
-        // 2. 드롭다운 렌더링 함수
         function renderDropdown(filterText = "") {
             themeDropdown.innerHTML = '';
             const lowerFilter = filterText.toLowerCase();
-
-            // 필터링 (빈 문자열이면 전체 표시)
             const filtered = allThemes.filter(t => t.toLowerCase().includes(lowerFilter));
 
-            // (1) Custom Input (초기화용)
             const customOpt = document.createElement('div');
             customOpt.className = 'theme-option custom';
             customOpt.innerText = '[ Clear / Custom Input ]';
             customOpt.onclick = () => {
                 themeInput.value = "";
                 themeInput.focus();
-                renderDropdown(""); // 비운 후 전체 리스트 보여주기
+                renderDropdown("");
             };
             themeDropdown.appendChild(customOpt);
 
-            // (2) 테마 목록
             if (filtered.length === 0) {
                 const noResult = document.createElement('div');
                 noResult.className = 'theme-option';
@@ -240,32 +255,23 @@
                     themeDropdown.appendChild(option);
                 });
             }
-
             themeDropdown.classList.add('show');
         }
 
-        // 3. 입력창 이벤트 핸들러 (수정된 부분)
-        
-        // 클릭하거나 포커스될 때는 '무조건 전체 리스트' ("") 보여주기
-        // (사용자가 현재 입력된 값을 유지하면서 다른 목록을 보고 싶어하는 경우 대응)
         themeInput.addEventListener('focus', () => renderDropdown(""));
         themeInput.addEventListener('click', () => renderDropdown(""));
         
-        // 타이핑할 때만 '필터링' 적용
         themeInput.addEventListener('input', () => {
             renderDropdown(themeInput.value);
             updatePreview();
         });
 
-        // 외부 클릭 시 닫기
         document.addEventListener('click', (e) => {
             if (!themeContainer.contains(e.target)) {
                 themeDropdown.classList.remove('show');
             }
         });
 
-
-        // --- 기타 로직 ---
         function updateLengthOptions() {
             const mode = modeSelect.value;
             const currentVal = lengthSelect.value;
@@ -281,11 +287,12 @@
             const user = usernameInput.value.trim() || 'Guest';
             let themeRaw = themeInput.value.trim() || 'dark';
             const theme = themeRaw.replace(/\s+/g, '_'); 
-
             const mode = modeSelect.value;
             const length = lengthSelect.value;
+            const isTransparent = transparentInput.checked;
+
             const baseUrl = window.location.origin;
-            const imgUrl = `${baseUrl}/api?username=${user}&theme=${theme}&mode=${mode}&length=${length}`;
+            const imgUrl = `${baseUrl}/api?username=${user}&theme=${theme}&mode=${mode}&length=${length}&transparent=${isTransparent}`;
             
             img.classList.add('loading');
             img.src = imgUrl;
@@ -296,6 +303,7 @@
         usernameInput.addEventListener('input', updatePreview);
         modeSelect.addEventListener('change', () => { updateLengthOptions(); updatePreview(); });
         lengthSelect.addEventListener('change', updatePreview);
+        transparentInput.addEventListener('change', updatePreview);
         
         codeBox.addEventListener('click', () => {
             navigator.clipboard.writeText(markdownCode.innerText).then(() => {
@@ -304,7 +312,6 @@
             });
         });
 
-        // 초기 실행
         fetchThemes();
         updateLengthOptions();
         updatePreview();

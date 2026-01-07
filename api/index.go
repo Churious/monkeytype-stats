@@ -11,9 +11,6 @@ import (
 	"time"
 )
 
-// ---------------------------
-// 1. 데이터 구조 및 설정
-// ---------------------------
 type Theme struct {
 	Name, BgColor, MainColor, SubColor, TextColor string
 }
@@ -32,7 +29,6 @@ type MonkeyProfile struct {
 	} `json:"data"`
 }
 
-// SVG 템플릿
 const svgTemplate = `<svg width="400" height="150" viewBox="0 0 400 150" fill="none" xmlns="http://www.w3.org/2000/svg">
     <style>
         .header { font: 800 20px 'Segoe UI', Ubuntu, Sans-Serif; fill: %s; }
@@ -50,7 +46,6 @@ const svgTemplate = `<svg width="400" height="150" viewBox="0 0 400 150" fill="n
     <text x="180" y="115" class="stat-value">%.2f%%</text>
 </svg>`
 
-// 전역 변수 (Vercel 인스턴스가 살아있는 동안 캐시 유지)
 var (
 	colorRegex   = regexp.MustCompile(`--([a-z-]+)-color:\s*(#[0-9a-fA-F]{3,8})`)
 	defaultTheme = Theme{"dark", "#2c2e31", "#e2b714", "#646669", "#d1d0c5"}
@@ -58,13 +53,9 @@ var (
 	cacheMutex   sync.RWMutex
 )
 
-// ---------------------------
-// 2. 로직 (테마 파싱 & 스탯 가져오기)
-// ---------------------------
 func getTheme(themeName string) Theme {
 	themeName = strings.ReplaceAll(themeName, " ", "_")
 
-	// 캐시 확인
 	cacheMutex.RLock()
 	if t, ok := themeCache[themeName]; ok {
 		cacheMutex.RUnlock()
@@ -72,9 +63,8 @@ func getTheme(themeName string) Theme {
 	}
 	cacheMutex.RUnlock()
 
-	// 깃허브에서 CSS 다운로드 (최신 테마 지원)
 	url := fmt.Sprintf("https://raw.githubusercontent.com/monkeytypegame/monkeytype/master/frontend/static/themes/%s.css", themeName)
-	client := http.Client{Timeout: 2 * time.Second} // Vercel 타임아웃 고려하여 짧게 설정
+	client := http.Client{Timeout: 2 * time.Second}
 	resp, err := client.Get(url)
 
 	if err != nil || resp.StatusCode != 200 {
@@ -84,7 +74,6 @@ func getTheme(themeName string) Theme {
 	cssBytes, _ := io.ReadAll(resp.Body)
 	cssContent := string(cssBytes)
 
-	// 정규식으로 색상 추출
 	t := Theme{Name: themeName, BgColor: "#2c2e31", MainColor: "#e2b714", SubColor: "#646669", TextColor: "#d1d0c5"}
 	matches := colorRegex.FindAllStringSubmatch(cssContent, -1)
 
@@ -136,11 +125,7 @@ func fetchStats(username, mode, length string) (float64, float64, error) {
 	return records[0].Wpm, records[0].Acc, nil
 }
 
-// ---------------------------
-// 3. Vercel 핸들러 (메인 함수)
-// ---------------------------
 func Handler(w http.ResponseWriter, r *http.Request) {
-	// 파라미터 받기 (user 또는 username 둘 다 허용)
 	username := r.URL.Query().Get("username")
 	if username == "" {
 		username = r.URL.Query().Get("user")
@@ -148,8 +133,8 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	themeName := r.URL.Query().Get("theme")
 	mode := r.URL.Query().Get("mode")
 	length := r.URL.Query().Get("length")
+	isTransparent := r.URL.Query().Get("transparent") == "true"
 
-	// 기본값 설정
 	if username == "" {
 		username = "Guest"
 	}
@@ -163,26 +148,26 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		length = "60"
 	}
 
-	// 데이터 가져오기
 	t := getTheme(themeName)
 	wpm, acc, err := fetchStats(username, mode, length)
 
-	// 에러나면 0으로 표시 (이미지는 깨지면 안 되니까)
 	if err != nil {
 		wpm, acc = 0, 0
 	}
 
 	modeDisplay := fmt.Sprintf("%s %s", mode, length)
 
-	// SVG 생성
+	svgBg := t.BgColor
+	if isTransparent {
+		svgBg = "none"
+	}
+
 	svgContent := fmt.Sprintf(svgTemplate,
-		t.MainColor, t.SubColor, t.MainColor, t.BgColor, t.TextColor,
+		t.MainColor, t.SubColor, t.MainColor, svgBg, t.TextColor,
 		username, modeDisplay, wpm, acc,
 	)
 
-	// 헤더 설정 (SVG 이미지로 인식하게 함)
 	w.Header().Set("Content-Type", "image/svg+xml")
-	// GitHub의 이미지 캐싱(camo)을 뚫고 갱신되게 하기 위해 Cache-Control 설정
 	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 
 	w.Write([]byte(svgContent))
