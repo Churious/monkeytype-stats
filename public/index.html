@@ -178,7 +178,7 @@
 <body>
 
     <div class="container">
-        <h1>Monkeytype Stats Builder</h1>
+        <h1>Monkeytype Stats Builder ⛏︎</h1>
         <p>Create your dynamic readme stats card.</p>
 
         <div class="input-group">
@@ -196,7 +196,7 @@
             <div id="theme-dropdown" class="theme-dropdown"></div>
 
             <div style="text-align: right; margin-top: 5px;">
-                <a href="https://github.com/monkeytypegame/monkeytype/tree/master/frontend/static/themes" target="_blank" class="theme-link">🔎 Verify on GitHub</a>
+                <a href="https://github.com/monkeytypegame/monkeytype/tree/master/frontend/static/themes" target="_blank" class="theme-link">★ Verify on GitHub</a>
             </div>
         </div>
 
@@ -222,7 +222,7 @@
     </div>
 
     <footer>
-        Made by <a href="https://github.com/Churious" target="_blank">@Churious</a> ♥
+        Made by <a href="https://github.com/Churious" target="_blank">@Churious</a> ❤︎
     </footer>
 
     <script>
@@ -252,7 +252,7 @@
                 if (!response.ok) throw new Error();
                 const data = await response.json();
                 allThemes = data.filter(f => f.name.endsWith('.css')).map(f => f.name.replace('.css', ''));
-                themeStatus.innerText = "✓ Loaded from GitHub";
+                themeStatus.innerText = "✔ Loaded from GitHub";
             } catch (e) {
                 allThemes = fallbackThemes;
                 themeStatus.innerText = "⚠ Using fallback list";
