@@ -133,9 +133,38 @@
         .preview-area { margin-top: 30px; margin-bottom: 20px; min-height: 150px; display: flex; align-items: center; justify-content: center; }
         img { max-width: 100%; border-radius: 10px; transition: opacity 0.3s; }
         .loading { opacity: 0.5; filter: blur(2px); }
-        .code-box { background-color: #1e1e1e; padding: 15px; border-radius: 5px; font-size: 0.8rem; word-break: break-all; color: var(--sub-color); cursor: pointer; position: relative; text-align: left; }
+        
+        .code-box { 
+            background-color: #1e1e1e; 
+            padding: 15px; 
+            border-radius: 5px; 
+            font-size: 0.8rem; 
+            word-break: break-all; 
+            color: var(--sub-color); 
+            cursor: pointer; 
+            position: relative; 
+            text-align: left; 
+        }
         .code-box:hover { color: var(--text-color); }
-        .copy-hint { position: absolute; right: 10px; top: 10px; font-size: 0.7rem; color: var(--main-color); opacity: 0; transition: opacity 0.2s; }
+        
+        /* ✨ 수정된 부분: 힌트 텍스트 스타일 개선 */
+        .copy-hint { 
+            position: absolute; 
+            right: 8px; 
+            top: 8px; 
+            font-size: 0.7rem; 
+            color: var(--main-color); 
+            
+            /* 배경 및 박스 스타일 추가 */
+            background-color: var(--dropdown-bg); /* 코드박스와 동일한 배경색 */
+            padding: 4px 8px; /* 텍스트 주변 여백 */
+            border-radius: 4px; /* 둥근 모서리 */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3); /* 살짝 그림자 줘서 띄우기 */
+            pointer-events: none; /* 힌트가 클릭을 막지 않도록 설정 */
+            
+            opacity: 0; 
+            transition: opacity 0.2s; 
+        }
         .code-box:hover .copy-hint { opacity: 1; }
 
         /* 체크박스 스타일 */
