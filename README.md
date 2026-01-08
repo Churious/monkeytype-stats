@@ -46,3 +46,6 @@ A: Ensure the theme name is correct. Spaces must be replaced with underscores (e
 ## 🌟 Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=churious/monkeytype-stats&type=Date)](https://star-history.com/#churious/monkeytype-stats&Date)
+
+## Credits
+Font: [Monocraft](https://github.com/IdreesInc/Monocraft) (Licensed under SIL OFL 1.1)
