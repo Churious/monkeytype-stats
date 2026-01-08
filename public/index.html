@@ -33,7 +33,6 @@
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
-            /* ✨ 커스텀 폰트 적용 */
             font-family: 'MyCustomFont', 'Roboto Mono', monospace;
             display: flex;
             flex-direction: column;
@@ -43,6 +42,10 @@
             margin: 0;
             padding: 20px;
             box-sizing: border-box;
+
+            /* ✨ 드래그 방지 (앱처럼 보이게) */
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         .container {
@@ -84,6 +87,10 @@
             box-sizing: border-box;
             outline: none;
             transition: border-color 0.2s;
+
+            /* ✨ 입력창은 드래그 허용 */
+            user-select: auto;
+            -webkit-user-select: auto;
         }
         input:focus, select:focus { border-color: var(--main-color); }
 
@@ -131,7 +138,16 @@
         .row { display: flex; gap: 10px; }
         .col { flex: 1; }
         .preview-area { margin-top: 30px; margin-bottom: 20px; min-height: 150px; display: flex; align-items: center; justify-content: center; }
-        img { max-width: 100%; border-radius: 10px; transition: opacity 0.3s; }
+        
+        img { 
+            max-width: 100%; 
+            border-radius: 10px; 
+            transition: opacity 0.3s;
+            
+            /* ✨ 이미지 드래그(Ghost Image) 방지 */
+            -webkit-user-drag: none;
+            user-select: none;
+        }
         .loading { opacity: 0.5; filter: blur(2px); }
         
         .code-box { 
@@ -147,21 +163,18 @@
         }
         .code-box:hover { color: var(--text-color); }
         
-        /* ✨ 수정된 부분: 힌트 텍스트 스타일 개선 */
+        /* 힌트 텍스트 스타일 */
         .copy-hint { 
             position: absolute; 
             right: 8px; 
             top: 8px; 
             font-size: 0.7rem; 
             color: var(--main-color); 
-            
-            /* 배경 및 박스 스타일 추가 */
-            background-color: var(--dropdown-bg); /* 코드박스와 동일한 배경색 */
-            padding: 4px 8px; /* 텍스트 주변 여백 */
-            border-radius: 4px; /* 둥근 모서리 */
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3); /* 살짝 그림자 줘서 띄우기 */
-            pointer-events: none; /* 힌트가 클릭을 막지 않도록 설정 */
-            
+            background-color: var(--dropdown-bg);
+            padding: 4px 8px;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            pointer-events: none;
             opacity: 0; 
             transition: opacity 0.2s; 
         }
@@ -245,7 +258,7 @@
             </div>
         </div>
 
-        <div class="preview-area"><img id="preview-img" src="" alt="Stats Preview"></div>
+        <div class="preview-area"><img id="preview-img" src="" alt="Stats Preview" draggable="false"></div>
         <label style="display:block; text-align:left; margin-bottom:8px;">Click to Copy Markdown</label>
         <div class="code-box" id="code-box"><span class="copy-hint">Click to Copy</span><span id="markdown-code"></span></div>
     </div>
