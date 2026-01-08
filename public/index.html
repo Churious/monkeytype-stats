@@ -222,7 +222,7 @@
     </div>
 
     <footer>
-        Made with ❤️ by <a href="https://github.com/Churious" target="_blank">@Churious</a>
+        Made by <a href="https://github.com/Churious" target="_blank">@Churious</a> ♥
     </footer>
 
     <script>
@@ -252,10 +252,10 @@
                 if (!response.ok) throw new Error();
                 const data = await response.json();
                 allThemes = data.filter(f => f.name.endsWith('.css')).map(f => f.name.replace('.css', ''));
-                themeStatus.innerText = "✅ Loaded from GitHub";
+                themeStatus.innerText = "✓ Loaded from GitHub";
             } catch (e) {
                 allThemes = fallbackThemes;
-                themeStatus.innerText = "⚠️ Using fallback list";
+                themeStatus.innerText = "⚠ Using fallback list";
             }
         }
 
@@ -349,7 +349,7 @@
         
         codeBox.addEventListener('click', () => {
             navigator.clipboard.writeText(markdownCode.innerText).then(() => {
-                const original = markdownCode.innerText; markdownCode.innerText = "✅ Copied to clipboard!";
+                const original = markdownCode.innerText; markdownCode.innerText = "✓ Copied to clipboard!";
                 setTimeout(() => markdownCode.innerText = original, 1500);
             });
         });
